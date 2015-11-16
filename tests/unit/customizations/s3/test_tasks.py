@@ -15,6 +15,9 @@ import random
 import threading
 import mock
 import socket
+import os
+import tempfile
+import shutil
 
 from botocore.exceptions import IncompleteReadError
 from botocore.vendored.requests.packages.urllib3.exceptions import \
@@ -324,6 +327,24 @@ class TestPrintOperation(unittest.TestCase):
         filename.dest_type = 's3'
         message = print_operation(filename, failed=False)
         self.assertIn(r'e:\foo', message)
+
+
+class TestCreateLocalFileTask(unittest.TestCase):
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+        self.filename = mock.Mock()
+        self.filename.dest = os.path.join(self.tempdir, 'local', 'file')
+        self.context = mock.Mock()
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+
+    def test_creates_file(self):
+        task = CreateLocalFileTask(self.context, self.filename)
+        task()
+        self.assertTrue(os.path.isfile(self.filename.dest))
+        self.context.announce_file_created.assert_called_with()
+
 
 
 class TestDownloadPartTask(unittest.TestCase):
