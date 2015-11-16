@@ -18,6 +18,7 @@ import socket
 import os
 import tempfile
 import shutil
+from six.moves import queue
 
 from botocore.exceptions import IncompleteReadError
 from botocore.vendored.requests.packages.urllib3.exceptions import \
@@ -331,7 +332,7 @@ class TestPrintOperation(unittest.TestCase):
 
 class TestCreateLocalFileTask(unittest.TestCase):
     def setUp(self):
-        self.result_queue = mock.Mock()
+        self.result_queue = queue.Queue()
         self.tempdir = tempfile.mkdtemp()
         self.filename = mock.Mock()
         self.filename.src = 'bucket/key'
@@ -349,6 +350,7 @@ class TestCreateLocalFileTask(unittest.TestCase):
         self.task()
         self.assertTrue(os.path.isfile(self.filename.dest))
         self.context.announce_file_created.assert_called_with()
+        self.assertTrue(self.result_queue.empty())
 
     def test_cancel_command_on_exception(self):
         # Set destination directory to read-only
@@ -356,7 +358,9 @@ class TestCreateLocalFileTask(unittest.TestCase):
         self.task()
         self.assertFalse(os.path.isfile(self.filename.dest))
         self.context.cancel.assert_called_with()
-        self.assertEqual(self.result_queue.put.call_count, 1)
+        self.assertFalse(self.result_queue.empty())
+        error_message = self.result_queue.get()
+        self.assertIn("download failed", error_message.message)
 
 
 class TestDownloadPartTask(unittest.TestCase):
