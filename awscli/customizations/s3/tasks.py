@@ -285,6 +285,11 @@ class CreateLocalFileTask(OrderableTask):
             with open(self._filename.dest, 'wb'):
                 pass
         except Exception as e:
+            message = print_operation(self._filename, failed=True,
+                                      dryrun=False)
+            message += '\n' + str(e)
+            result = {'message': message, 'error': True}
+            self._result_queue.put(PrintTask(**result))
             self._context.cancel()
         else:
             self._context.announce_file_created()

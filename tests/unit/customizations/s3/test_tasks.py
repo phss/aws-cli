@@ -334,7 +334,9 @@ class TestCreateLocalFileTask(unittest.TestCase):
         self.result_queue = mock.Mock()
         self.tempdir = tempfile.mkdtemp()
         self.filename = mock.Mock()
+        self.filename.src = 'bucket/key'
         self.filename.dest = os.path.join(self.tempdir, 'local', 'file')
+        self.filename.operation_name = 'download'
         self.context = mock.Mock()
         self.task = CreateLocalFileTask(self.context,
                                         self.filename,
@@ -354,6 +356,7 @@ class TestCreateLocalFileTask(unittest.TestCase):
         self.task()
         self.assertFalse(os.path.isfile(self.filename.dest))
         self.context.cancel.assert_called_with()
+        self.assertEqual(self.result_queue.put.call_count, 1)
 
 
 class TestDownloadPartTask(unittest.TestCase):
