@@ -263,9 +263,10 @@ class UploadPartTask(OrderableTask):
 
 
 class CreateLocalFileTask(OrderableTask):
-    def __init__(self, context, filename):
+    def __init__(self, context, filename, result_queue):
         self._context = context
         self._filename = filename
+        self._result_queue = result_queue
 
     def __call__(self):
         dirname = os.path.dirname(self._filename.dest)

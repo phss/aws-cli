@@ -331,11 +331,14 @@ class TestPrintOperation(unittest.TestCase):
 
 class TestCreateLocalFileTask(unittest.TestCase):
     def setUp(self):
+        self.result_queue = mock.Mock()
         self.tempdir = tempfile.mkdtemp()
         self.filename = mock.Mock()
         self.filename.dest = os.path.join(self.tempdir, 'local', 'file')
         self.context = mock.Mock()
-        self.task = CreateLocalFileTask(self.context, self.filename)
+        self.task = CreateLocalFileTask(self.context,
+                                        self.filename,
+                                        self.result_queue)
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)
@@ -522,7 +525,7 @@ class TestTaskOrdering(unittest.TestCase):
     def create_task(self):
         # We don't actually care about the arguments, we just want to test
         # the ordering of the tasks.
-        return CreateLocalFileTask(None, None)
+        return CreateLocalFileTask(None, None, None)
 
     def complete_task(self):
         return CompleteDownloadTask(None, None, None, None, None)
