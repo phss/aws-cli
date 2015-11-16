@@ -335,16 +335,22 @@ class TestCreateLocalFileTask(unittest.TestCase):
         self.filename = mock.Mock()
         self.filename.dest = os.path.join(self.tempdir, 'local', 'file')
         self.context = mock.Mock()
+        self.task = CreateLocalFileTask(self.context, self.filename)
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
-    def test_creates_file(self):
-        task = CreateLocalFileTask(self.context, self.filename)
-        task()
+    def test_creates_file_and_announces(self):
+        self.task()
         self.assertTrue(os.path.isfile(self.filename.dest))
         self.context.announce_file_created.assert_called_with()
 
+    def test_cancel_command_on_exception(self):
+        # Set destination directory to read-only
+        os.chmod(self.tempdir, 444)
+        self.task()
+        self.assertFalse(os.path.isfile(self.filename.dest))
+        self.context.cancel.assert_called_with()
 
 
 class TestDownloadPartTask(unittest.TestCase):
